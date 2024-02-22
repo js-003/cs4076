@@ -8,28 +8,45 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class TCPServer {
-    private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
-    private ServerSocket serverSocket;
+    private static Socket clientSocket;
+    private static PrintWriter out;
+    private static BufferedReader in;
+    private static ServerSocket serverSocket;
     private static final int PORT = 1234;
-    private  int clientConnections = 0;
+    private static int clientConnections = 0;
 
-    public void start(int port) throws IOException {
-        serverSocket = new ServerSocket(port);
-        clientSocket = serverSocket.accept();
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    public static void connect(int port) throws IOException {//Step 2.
+        try {
+            clientSocket = serverSocket.accept();               //Step 2.
+            clientConnections++;
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); //Step 3.
+            out = new PrintWriter(clientSocket.getOutputStream(), true); //Step 3.
+
+            String message = in.readLine();         //Step 4.
+            System.out.println("Message received from client: " + clientConnections + "  " + message);
+            out.println("Response from Server (Capitalized Message): " + message.toUpperCase());     //Step 4.
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void stop() throws IOException {
-        in.close();
-        out.close();
+    public static void stop() throws IOException {
         clientSocket.close();
         serverSocket.close();
     }
     public static void main(String[] args) throws IOException {
-        TCPServer server = new TCPServer();
-        server.start(PORT);
+        System.out.println("Opening port...\n");
+        try
+        {
+            serverSocket = new ServerSocket(PORT);      //Step 1.
+        }
+        catch(IOException e)
+        {
+            System.out.println("Unable to attach to port!");
+        }finally {
+            connect(PORT);
+        }
+
     }
 }
+
