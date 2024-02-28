@@ -4,6 +4,7 @@ module group1.cs4076_project {
 
     requires org.controlsfx.controls;
     requires org.kordamp.bootstrapfx.core;
+    requires java.sql;
 
     opens group1.cs4076_project to javafx.fxml;
     exports group1.cs4076_project;
