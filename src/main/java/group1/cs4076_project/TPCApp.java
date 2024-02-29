@@ -19,33 +19,33 @@ import java.net.Socket;
 import java.util.*;
 
 public class TPCApp extends Application {
-    private HashMap<String, String> List = new HashMap<>();
-    private HashMap<String,String> hashMap = new HashMap<>();
+    private HashMap<String, String> dbNewAdd = new HashMap<>();
+    private HashMap<String,String> dbStorage = new HashMap<>();
 
     @Override
     public void start(Stage stage) throws IOException {
-        GridPane G = new GridPane();
-        G.setAlignment(Pos.CENTER);
-        G.add(buttonsMain(),0,1);
+        GridPane gridPane = new GridPane();
+        gridPane.setAlignment(Pos.CENTER);
+        gridPane.add(buttonsMain(),0,1);
         VBox vBox = new VBox();
-        HBox h = new HBox();
+        HBox hBox = new HBox();
         Button stop = new Button("Stop");
         stop.setPrefWidth(180);
         stop.setPrefHeight(50);
-        Text m = new Text("Select One Of The Buttons Below");
-        m.setFont(new Font(20));
-        m.setTextAlignment(TextAlignment.CENTER);
-        h.setAlignment(Pos.CENTER);
-        h.getChildren().add(m);
-        G.add(h,0,0);
+        Text mainMessage = new Text("Select One Of The Buttons Below");
+        mainMessage.setFont(new Font(20));
+        mainMessage.setTextAlignment(TextAlignment.CENTER);
+        hBox.setAlignment(Pos.CENTER);
+        hBox.getChildren().add(mainMessage);
+        gridPane.add(hBox,0,0);
         vBox.getChildren().add(stop);
         vBox.setAlignment(Pos.CENTER);
-        G.setVgap(40);
-        G.add(vBox,0,2);
-        stage.setResizable(false);
+        gridPane.setVgap(40);
+        gridPane.add(vBox,0,2);
+       //stage.setResizable(false);
         stage.setTitle("Class Scheduler");
         stage.getIcons().add(new Image("file:icon.png"));
-        Scene scene = new Scene(G,640,480);
+        Scene scene = new Scene(gridPane,640,480);
         stage.setScene(scene);
         stage.show();
         try {
@@ -55,22 +55,21 @@ public class TPCApp extends Application {
             System.out.println("NO");
         }
         System.out.println("Connected");
-
        // startConnection();
     }
 
 
-    public HBox buttonsMain(){
+    private HBox buttonsMain(){
         HBox hBox = new HBox();
         Button add = new Button("Add Class");
         Button rem = new Button("Remove Class");
         Button dis = new Button("Display Class Schedule");
-        Insets n = new Insets(15);
-        add.setPadding(n);
+        Insets in = new Insets(15);
+        add.setPadding(in);
         add.setPrefWidth(150);
         rem.setPrefWidth(150);
-        rem.setPadding(n);
-        dis.setPadding(n);
+        rem.setPadding(in);
+        dis.setPadding(in);
         hBox.getChildren().add(add);
         hBox.getChildren().add(rem);
         hBox.getChildren().add(dis);
@@ -85,41 +84,37 @@ public class TPCApp extends Application {
         return hBox;
     }
 
-    DatePicker dp = new DatePicker();
-    TextField rn = new TextField();
-    TextField cn = new TextField();
-    ChoiceBox<String> cb = new ChoiceBox<>();
-    TextField mn = new TextField();
-    TextField mc = new TextField();
-    public void addClass() throws IOException {
+    private DatePicker date = new DatePicker();
+    private TextField roomNum = new TextField();
+    private TextField className = new TextField();
+    private ChoiceBox<String> classTimes = new ChoiceBox<>();
+    private TextField moduleName = new TextField();
+    private TextField moduleCode = new TextField();
 
+    private void addClass() throws IOException {
+        dataBase();
         VBox vBox = new VBox();
         vBox.setSpacing(25);
-        Stage s = new Stage();
+        Stage stage = new Stage();
         GridPane grid = new GridPane();
-        mn.setPromptText("Enter Module Name: ");
-        mc.setPromptText("Enter Module Code: ");
-        dp.setPromptText("Select Date:");
-        mn.setMaxWidth(245);
-        mc.setMaxWidth(245);
-        dp.setMaxWidth(245);
-        rn.setMaxWidth(245);
-        cn.setMaxWidth(245);
-        rn.setPromptText("Enter A Room Number: ");
-        cn.setPromptText("Enter A Class Name And Year: LM051-2022");
-        dp.setEditable(false);
-        cb.setValue("Class Time");
-        cb.setMaxWidth(245);
-        if(cb.getItems().isEmpty()) for(int i = 9 ; i<18; i++){
-            cb.getItems().add(i+":00");
-        }
-        try{
-            dataBase();
-        }catch (Exception e){
-            System.out.println("ERROR");
+        moduleName.setPromptText("Enter Module Name: ");
+        moduleCode.setPromptText("Enter Module Code: ");
+        date.setPromptText("Select Date:");
+        moduleName.setMaxWidth(245);
+        moduleCode.setMaxWidth(245);
+        date.setMaxWidth(245);
+        roomNum.setMaxWidth(245);
+        className.setMaxWidth(245);
+        roomNum.setPromptText("Enter A Room Number: ");
+        className.setPromptText("Enter A Class Name And Year: LM051-2022");
+        date.setEditable(false);
+        classTimes.setValue("Class Time");
+        classTimes.setMaxWidth(245);
+        if(classTimes.getItems().isEmpty()) for(int i = 9 ; i<18; i++){
+            classTimes.getItems().add(i+":00");
         }
         vBox.setPrefWidth(640);
-        vBox.getChildren().add(m());
+        vBox.getChildren().add(menuBar());
         HBox hBox = new HBox();
         grid.setAlignment(Pos.TOP_CENTER);
         hBox.setAlignment(Pos.CENTER);
@@ -130,55 +125,55 @@ public class TPCApp extends Application {
         show.setPadding(new Insets(10));
         Stop.setPadding(new Insets(10));
         hBox.getChildren().addAll(show,Stop);
-        vBox.getChildren().addAll(cb,dp,mn,mc,rn,cn,hBox);
+        vBox.getChildren().addAll(classTimes, date,moduleName,moduleCode, roomNum,className,hBox);
         show.setOnAction(actionEvent -> {
-            String x = "";
-            Alert a1 = new Alert(Alert.AlertType.WARNING);
+            String inputStore = "";
+            Alert alert = new Alert(Alert.AlertType.WARNING);
             while(true) {
-                if (cn.getText().isEmpty()) {
-                    a1.setContentText("Please enter a class name!");
-                    a1.show();
-                } else if (cn.getText().isEmpty()) {
-                    a1.setContentText("Please enter a room number!");
-                    a1.show();
-                } else if (dp.getValue().equals(null)) {
-                    a1.setContentText("Please select a date!");
-                    a1.show();
-                } else if (cb.getValue().equals("Class Time")) {
-                    a1.setContentText("Please select a class time!");
-                    a1.show();
+                if (className.getText().isEmpty()) {
+                    alert.setContentText("Please enter a class name!");
+                    alert.show();
+                } else if (className.getText().isEmpty()) {
+                    alert.setContentText("Please enter a room number!");
+                    alert.show();
+                } else if (date.getValue().equals(null)) {
+                    alert.setContentText("Please select a date!");
+                    alert.show();
+                } else if (classTimes.getValue().equals("Class Time")) {
+                    alert.setContentText("Please select a class time!");
+                    alert.show();
                 }else break;
             }
-                x += mn.getText()+"_"+mc.getText()+"_"+cb.getValue()+ "_" + dp.getValue() + "_" +rn.getText();
-                if(hashMap.toString().contains(cn.getText())){
-                    if(hashMap.get(cn.getText()).contains(dp.getValue().toString()) && hashMap.get(cn.getText()).contains(cb.getValue()) ) {
-                        a1.setContentText("The time selected is already taken on this date "+dp.getValue().toString()); a1.show();
-                    }else hashMap.put(cn.getText(), hashMap.get(cn.getText()) + ";" + x); List.put(cn.getText(), List.get(cn.getText()) + ";" + x);
-            }else hashMap.put(cn.getText(),x); List.put(cn.getText(),x);
+                inputStore += moduleName.getText()+"_"+moduleCode.getText()+"_"+classTimes.getValue()+ "_" + date.getValue() + "_" + roomNum.getText();
+                if(dbStorage.toString().contains(className.getText())){
+                    if(dbStorage.get(className.getText()).contains(date.getValue().toString()) && dbStorage.get(className.getText()).contains(classTimes.getValue()) ) {
+                        alert.setContentText("The time selected is already taken on this date "+ date.getValue().toString()); alert.show();
+                    }else dbStorage.put(className.getText(), dbStorage.get(className.getText()) + ";" + inputStore); dbNewAdd.put(className.getText(), dbNewAdd.get(className.getText()) + ";" + inputStore);
+            }else dbStorage.put(className.getText(),inputStore); dbNewAdd.put(className.getText(),inputStore);
             insertDB();
         });
         Stop.setOnAction(actionEvent -> {
             clear();
-            s.close();
+            stage.close();
         });
         grid.add(vBox,0,0);
-        s.setTitle("Add Class To Schedule");
-        s.getIcons().add(new Image("file:/icon.png"));
+        stage.setTitle("Add Class To Schedule");
+        stage.getIcons().add(new Image("file:/icon.png"));
         Scene scene = new Scene(grid,640,480);
-        s.setScene(scene);
-        s.show();
+        stage.setScene(scene);
+        stage.show();
     }
-    public void insertDB(){
+    private void insertDB(){
         try {
-            Connection connection = DriverManager.getConnection(
+            Connection dbconnect = DriverManager.getConnection(
                     "jdbc:mysql://127.0.0.1:3306/data",
                     "root",
                     "@Root_4076-"
             );
-            Statement statement = connection.createStatement();
-            String g = List.toString().replace("{","").replace("}","").replace("=","_");
-            String[] data = g.split(", ");
-            String dataString = "";
+            Statement dbstatement = dbconnect.createStatement();
+            String inputToDb = dbNewAdd.toString().replace("{","").replace("}","").replace("=","_");
+            String[] data = inputToDb.split(", ");
+            String dataString;
             int i = 0;
             while(i< data.length){
                 String[] c = data[i].split("_");
@@ -189,10 +184,10 @@ public class TPCApp extends Application {
                         Sclass = dataString.split(";");
                         while(j<Sclass.length-1){
                             String[] sclass = Arrays.toString(Sclass).replace("[","").replace("]","").split(",");
-                            statement.executeUpdate("INSERT INTO CLASSES VALUES ("+"'"+sclass[0]+"',"+"'"+sclass[1]+"',"+"'"+sclass[2]+"',"+"'"+sclass[3]+"',"+"'"+sclass[4]+"',"+"'"+sclass[5]+"'"+")");
+                            dbstatement.executeUpdate("INSERT INTO CLASSES VALUES ("+"'"+sclass[0]+"',"+"'"+sclass[1]+"',"+"'"+sclass[2]+"',"+"'"+sclass[3]+"',"+"'"+sclass[4]+"',"+"'"+sclass[5]+"'"+")");
                             j++;
                         }
-                    }else statement.executeUpdate("INSERT INTO CLASSES " + "VALUES ("+"'"+c[0]+"',"+"'"+c[1]+"',"+"'"+c[2]+"',"+"'"+c[3]+"',"+"'"+c[4]+"',"+"'"+c[5]+"'"+")");
+                    }else dbstatement.executeUpdate("INSERT INTO CLASSES " + "VALUES ("+"'"+c[0]+"',"+"'"+c[1]+"',"+"'"+c[2]+"',"+"'"+c[3]+"',"+"'"+c[4]+"',"+"'"+c[5]+"'"+")");
                 i++;
             }
 
@@ -202,35 +197,35 @@ public class TPCApp extends Application {
     }
 
     private void clear(){
-        rn.clear();
-        cn.clear();
-        dp.setValue(null);
-        cb.setValue("Class Time");
-        mn.clear();
-        mc.clear();
+        roomNum.clear();
+        className.clear();
+        date.setValue(null);
+        classTimes.setValue("Class Time");
+        moduleName.clear();
+        moduleCode.clear();
     }
-    public void dataBase(){
+    private void dataBase(){
         try {
-            Connection connection = DriverManager.getConnection(
+            Connection dbconnection = DriverManager.getConnection(
                     "jdbc:mysql://127.0.0.1:3306/data",
                     "root",
                     "@Root_4076-"
             );
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM CLASSES");
-            while(resultSet.next()){
-                String x = resultSet.getString("modulename")+"_"+resultSet.getString("modulecode")+"_"+resultSet.getString("time")+"_"+resultSet.getString("date")+"_"+resultSet.getString("roomnumber");
-                if(hashMap.containsKey(resultSet.getString("classyear"))){
-                    String tmp = hashMap.get(resultSet.getString("classyear"));
-                    hashMap.put(resultSet.getString("classyear"),tmp+";"+x);
-                }else hashMap.put(resultSet.getString("classyear"),x);
+            Statement dbstatement = dbconnection.createStatement();
+            ResultSet dbResultSet = dbstatement.executeQuery("SELECT * FROM CLASSES");
+            while(dbResultSet.next()){
+                String dbReader = dbResultSet.getString("modulename")+"_"+dbResultSet.getString("modulecode")+"_"+dbResultSet.getString("time")+"_"+dbResultSet.getString("date")+"_"+dbResultSet.getString("roomnumber");
+                if(dbStorage.containsKey(dbResultSet.getString("classyear"))){
+                    String tmp = dbStorage.get(dbResultSet.getString("classyear"));
+                    dbStorage.put(dbResultSet.getString("classyear"),tmp+";"+dbReader);
+                }else dbStorage.put(dbResultSet.getString("classyear"),dbReader);
             }
         }catch (SQLException e){
             e.printStackTrace();
         }
     }
-    public MenuBar m(){
-        MenuBar mb = new MenuBar();
+    private MenuBar menuBar(){
+        MenuBar menu = new MenuBar();
         Menu options = new Menu("Options");
         MenuItem clear = new MenuItem("Clear");
         MenuItem checkCon = new MenuItem("Check Connection");
@@ -239,8 +234,8 @@ public class TPCApp extends Application {
         clear.setOnAction(actionevent -> {
             clear();
         });
-        mb.getMenus().add(options);
-        return mb;
+        menu.getMenus().add(options);
+        return menu;
     }
     private VBox DisplayTab() {
         VBox vBox = new VBox();
@@ -258,13 +253,13 @@ public class TPCApp extends Application {
         TextField textField = new TextField();
         textField.setPromptText("Enter Class Name And Year: LM051-2022");
         textField.setMaxWidth(230);
-        vBox.getChildren().add(m());
+        vBox.getChildren().add(menuBar());
         vBox.getChildren().add(textField);
         vBox.getChildren().add(hBox);
         return vBox;
     }
 
-    public Socket clientSocket;
+    private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
 
@@ -272,7 +267,7 @@ public class TPCApp extends Application {
 
     private static InetAddress host;
 
-    public static String m = "";
+    private static String m = "";
 
 /*    public void startConnection() throws IOException {
         try {
