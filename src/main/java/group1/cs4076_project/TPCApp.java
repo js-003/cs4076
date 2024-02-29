@@ -17,6 +17,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class TPCApp extends Application {
     private HashMap<String, String> dbNewAdd = new HashMap<>();
@@ -129,7 +130,7 @@ public class TPCApp extends Application {
         show.setOnAction(actionEvent -> {
             String inputStore = "";
             Alert alert = new Alert(Alert.AlertType.WARNING);
-            while(true) {
+
                 if (className.getText().isEmpty()) {
                     alert.setContentText("Please enter a class name!");
                     alert.show();
@@ -142,15 +143,13 @@ public class TPCApp extends Application {
                 } else if (classTimes.getValue().equals("Class Time")) {
                     alert.setContentText("Please select a class time!");
                     alert.show();
-                }else break;
-            }
-                inputStore += moduleName.getText()+"_"+moduleCode.getText()+"_"+classTimes.getValue()+ "_" + date.getValue() + "_" + roomNum.getText();
-                if(dbStorage.toString().contains(className.getText())){
-                    if(dbStorage.get(className.getText()).contains(date.getValue().toString()) && dbStorage.get(className.getText()).contains(classTimes.getValue()) ) {
-                        alert.setContentText("The time selected is already taken on this date "+ date.getValue().toString()); alert.show();
-                    }else dbStorage.put(className.getText(), dbStorage.get(className.getText()) + ";" + inputStore); dbNewAdd.put(className.getText(), dbNewAdd.get(className.getText()) + ";" + inputStore);
-            }else dbStorage.put(className.getText(),inputStore); dbNewAdd.put(className.getText(),inputStore);
-            insertDB();
+                }
+                inputStore += moduleName.getText() + "_" + moduleCode.getText() + "_" + classTimes.getValue() + "_" + date.getValue() + "_" + roomNum.getText();
+            if(dbStorage.toString().contains(className.getText())){
+                if(dbStorage.get(className.getText()).contains(date.getValue().toString()) && dbStorage.get(className.getText()).contains(classTimes.getValue()) ) {
+                    alert.setContentText("The time selected is already taken on this date "+ date.getValue().toString()); alert.show();
+                }else {dbStorage.put(className.getText(), dbStorage.get(className.getText()) + ";" + inputStore); dbNewAdd.put(className.getText(),inputStore);insertDB();}
+            }else {dbStorage.put(className.getText(),inputStore); dbNewAdd.put(className.getText(),inputStore);insertDB();}
         });
         Stop.setOnAction(actionEvent -> {
             clear();
