@@ -128,28 +128,37 @@ public class TPCApp extends Application {
         hBox.getChildren().addAll(show,Stop);
         vBox.getChildren().addAll(classTimes, date,moduleName,moduleCode, roomNum,className,hBox);
         show.setOnAction(actionEvent -> {
-            String inputStore = "";
-            Alert alert = new Alert(Alert.AlertType.WARNING);
 
-                if (className.getText().isEmpty()) {
-                    alert.setContentText("Please enter a class name!");
-                    alert.show();
-                } else if (className.getText().isEmpty()) {
-                    alert.setContentText("Please enter a room number!");
-                    alert.show();
-                } else if (date.getValue().equals(null)) {
-                    alert.setContentText("Please select a date!");
-                    alert.show();
-                } else if (classTimes.getValue().equals("Class Time")) {
-                    alert.setContentText("Please select a class time!");
-                    alert.show();
-                }
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            if (className.getText().isEmpty()) {
+                alert.setContentText("Please enter a class name!");
+                alert.show();
+            } else if (roomNum.getText().isEmpty()) {
+                alert.setContentText("Please enter a room number!");
+                alert.show();
+            } else if (date.getValue().equals(null)) {
+                alert.setContentText("Please select a date!");
+                alert.show();
+            } else if (classTimes.getValue().equals("Class Time")) {
+                alert.setContentText("Please select a class time!");
+                alert.show();
+            } else if (moduleCode.getText().isEmpty()) {
+                alert.setContentText("Please enter a module name!");
+                alert.show();
+            } else if (moduleName.getText().isEmpty()) {
+                alert.setContentText("Please enter a module code!");
+                alert.show();
+            }
+            if (!className.getText().isEmpty() && !roomNum.getText().isEmpty() && !date.getValue().equals(null) && !classTimes.getValue().equals("Class Time") && !moduleName.getText().isEmpty()&& !moduleCode.getText().isEmpty()){
+                String inputStore = "";
+                alert = new Alert(Alert.AlertType.WARNING);
                 inputStore += moduleName.getText() + "_" + moduleCode.getText() + "_" + classTimes.getValue() + "_" + date.getValue() + "_" + roomNum.getText();
-            if(dbStorage.toString().contains(className.getText())){
-                if(dbStorage.get(className.getText()).contains(date.getValue().toString()) && dbStorage.get(className.getText()).contains(classTimes.getValue()) ) {
-                    alert.setContentText("The time selected is already taken on this date "+ date.getValue().toString()); alert.show();
-                }else {dbStorage.put(className.getText(), dbStorage.get(className.getText()) + ";" + inputStore); dbNewAdd.put(className.getText(),inputStore);insertDB();}
-            }else {dbStorage.put(className.getText(),inputStore); dbNewAdd.put(className.getText(),inputStore);insertDB();}
+                if(dbStorage.toString().contains(className.getText())){
+                    if(dbStorage.get(className.getText()).contains(date.getValue().toString()) && dbStorage.get(className.getText()).contains(classTimes.getValue()) ) {
+                        alert.setContentText("The time selected is already taken on this date "+ date.getValue().toString()); alert.show();
+                    }else {dbStorage.put(className.getText(), dbStorage.get(className.getText()) + ";" + inputStore); dbNewAdd.put(className.getText(),inputStore);insertDB();}
+                }else {dbStorage.put(className.getText(),inputStore); dbNewAdd.put(className.getText(),inputStore);insertDB();}
+            }
         });
         Stop.setOnAction(actionEvent -> {
             clear();
