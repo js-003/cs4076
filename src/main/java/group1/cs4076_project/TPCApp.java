@@ -27,10 +27,19 @@ public class TPCApp extends Application {
     public void start(Stage stage) throws IOException {
         GridPane gridPane = new GridPane();
         gridPane.setAlignment(Pos.CENTER);
-        gridPane.add(buttonsMain(), 0, 1);
+        gridPane.add(buttonsMain(),0,1);
         VBox vBox = new VBox();
         HBox hBox = new HBox();
         Button stop = new Button("Stop");
+        stop.setOnAction(actionEvent -> {
+            try {
+                out.println("STOP");
+                clientStop();
+                stage.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
         stop.setPrefWidth(180);
         stop.setPrefHeight(50);
         Text mainMessage = new Text("Select One Of The Buttons Below");
@@ -38,25 +47,25 @@ public class TPCApp extends Application {
         mainMessage.setTextAlignment(TextAlignment.CENTER);
         hBox.setAlignment(Pos.CENTER);
         hBox.getChildren().add(mainMessage);
-        gridPane.add(hBox, 0, 0);
+        gridPane.add(hBox,0,0);
         vBox.getChildren().add(stop);
         vBox.setAlignment(Pos.CENTER);
         gridPane.setVgap(40);
-        gridPane.add(vBox, 0, 2);
+        gridPane.add(vBox,0,2);
         //stage.setResizable(false);
         stage.setTitle("Class Scheduler");
         stage.getIcons().add(new Image("file:icon.png"));
-        Scene scene = new Scene(gridPane, 640, 480);
+        Scene scene = new Scene(gridPane,640,480);
         stage.setScene(scene);
-        stage.show();
         try {
             System.out.println("Starting Connection...");
             host = InetAddress.getLocalHost();
+            startConnection();
         } catch (Exception e) {
             System.out.println("NO");
         }
         System.out.println("Connected");
-        // startConnection();
+        stage.show();
     }
 
 
@@ -99,13 +108,16 @@ public class TPCApp extends Application {
     private ChoiceBox<String> classTimes = new ChoiceBox<>();
     private TextField moduleName = new TextField();
     private TextField moduleCode = new TextField();
+    private ChoiceBox<String> classType = new ChoiceBox<>();
 
     private void addClass() throws IOException {
-        dataBase();
-        VBox vBox = new VBox();
+    dataBase();
+    VBox vBox = new VBox();
+        classType.setValue("Class Type");
+        classType.getItems().addAll("Lecture","Lab","Tutorial");
         vBox.setSpacing(25);
-        Stage stage = new Stage();
-        GridPane grid = new GridPane();
+    Stage stage = new Stage();
+    GridPane grid = new GridPane();
         moduleName.setPromptText("Enter Module Name: ");
         moduleCode.setPromptText("Enter Module Code: ");
         date.setPromptText("Select Date:");
@@ -114,80 +126,76 @@ public class TPCApp extends Application {
         date.setMaxWidth(245);
         roomNum.setMaxWidth(245);
         className.setMaxWidth(245);
+        classType.setMaxWidth(245);
         roomNum.setPromptText("Enter A Room Number: ");
         className.setPromptText("Enter A Class Name And Year: LM051-2022");
         date.setEditable(false);
         classTimes.setValue("Class Time");
         classTimes.setMaxWidth(245);
-        if (classTimes.getItems().isEmpty()) for (int i = 9; i < 18; i++) {
-            classTimes.getItems().add(i + ":00");
-        }
+        if(classTimes.getItems().isEmpty()) for(int i = 9 ; i<18; i++){classTimes.getItems().add(i+":00");}
         vBox.setPrefWidth(640);
         vBox.getChildren().add(menuBar());
-        HBox hBox = new HBox();
+    HBox hBox = new HBox();
         grid.setAlignment(Pos.TOP_CENTER);
         hBox.setAlignment(Pos.CENTER);
         vBox.setAlignment(Pos.CENTER);
         hBox.setSpacing(25);
-        Button show = new Button("Save");
-        Button Stop = new Button("Stop");
+    Button show = new Button("Save");
+    Button Stop = new Button("Close");
         show.setPadding(new Insets(10));
         Stop.setPadding(new Insets(10));
-        hBox.getChildren().addAll(show, Stop);
-        vBox.getChildren().addAll(classTimes, date, moduleName, moduleCode, roomNum, className, hBox);
+        hBox.getChildren().addAll(show,Stop);
+        vBox.getChildren().addAll(classType,classTimes, date,moduleName,moduleCode, roomNum,className,hBox);
         show.setOnAction(actionEvent -> {
-
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            if (className.getText().isEmpty()) {
-                alert.setContentText("Please enter a class name!");
-                alert.show();
-            } else if (roomNum.getText().isEmpty()) {
-                alert.setContentText("Please enter a room number!");
-                alert.show();
-            } else if (date.getValue().equals(null)) {
-                alert.setContentText("Please select a date!");
-                alert.show();
-            } else if (classTimes.getValue().equals("Class Time")) {
-                alert.setContentText("Please select a class time!");
-                alert.show();
-            } else if (moduleCode.getText().isEmpty()) {
-                alert.setContentText("Please enter a module name!");
-                alert.show();
-            } else if (moduleName.getText().isEmpty()) {
-                alert.setContentText("Please enter a module code!");
-                alert.show();
-            }
-            if (!className.getText().isEmpty() && !roomNum.getText().isEmpty() && date.getValue()==null && !classTimes.getValue().equals("Class Time") && !moduleName.getText().isEmpty() && !moduleCode.getText().isEmpty()) {
-                String inputStore = "";
-                alert = new Alert(Alert.AlertType.WARNING);
-                inputStore += moduleName.getText() + "_" + moduleCode.getText() + "_" + classTimes.getValue() + "_" + date.getValue() + "_" + roomNum.getText();
-                if (dbStorage.toString().contains(className.getText())) {
-                    if (dbStorage.get(className.getText()).contains(date.getValue().toString()) && dbStorage.get(className.getText()).contains(classTimes.getValue())) {
-                        alert.setContentText("The time selected is already taken on this date " + date.getValue().toString());
-                        alert.show();
-                    } else {
-                        dbStorage.put(className.getText(), dbStorage.get(className.getText()) + ";" + inputStore);
-                        dbNewAdd.put(className.getText(), inputStore);
-                        insertDB();
-                    }
-                } else {
-                    dbStorage.put(className.getText(), inputStore);
-                    dbNewAdd.put(className.getText(), inputStore);
-                    insertDB();
-                }
-            }
-        });
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        if (className.getText().isEmpty()) {
+            alert.setContentText("Please enter a class name!");
+            alert.show();
+        } else if (roomNum.getText().isEmpty()) {
+            alert.setContentText("Please enter a room number!");
+            alert.show();
+        } else if (date.getValue() == null) {
+            alert.setContentText("Please select a date!");
+            alert.show();
+        } else if (classTimes.getValue().equals("Class Time")) {
+            alert.setContentText("Please select a class time!");
+            alert.show();
+        } else if (moduleCode.getText().isEmpty()) {
+            alert.setContentText("Please enter a module name!");
+            alert.show();
+        } else if (moduleName.getText().isEmpty()) {
+            alert.setContentText("Please enter a module code!");
+            alert.show();
+        } else if (classType.getValue().equals("Class Type")) {
+            alert.setContentText("Please select a class type!");
+            alert.show();
+        }
+        String check ;
+        String inputStore = className.getText() + "_" + classType.getValue() + "_" + moduleName.getText() + "_" + moduleCode.getText() + "_" + classTimes.getValue() + "_" + date.getValue() + "_" + roomNum.getText();
+        out.println("ADD," + inputStore);
+        try {
+            check = in.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        if(check.equals("TAKEN TIME")){
+            alert.setContentText("The time selected is already taken on this date " + date.getValue().toString());
+            alert.show();
+        }
+    });
         Stop.setOnAction(actionEvent -> {
-            clear();
-            stage.close();
-        });
-        grid.add(vBox, 0, 0);
+        clear();
+        stage.close();
+    });
+        grid.add(vBox,0,0);
         stage.setTitle("Add Class To Schedule");
         stage.getIcons().add(new Image("file:/icon.png"));
-        Scene scene = new Scene(grid, 640, 480);
+    Scene scene = new Scene(grid,640,480);
+        stage.getIcons().add(new Image("file:icon.png"));
         stage.setScene(scene);
         stage.show();
-    }
+}
+
 
     private void removeDB(){
         try {
@@ -405,7 +413,7 @@ public class TPCApp extends Application {
     }
 
 
-    public void stopConnection() throws IOException {
+    public void clientStop() throws IOException {
         clientSocket.close();
     }
 
