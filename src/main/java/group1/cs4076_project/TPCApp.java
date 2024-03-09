@@ -16,7 +16,12 @@ import javafx.stage.Stage;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.*;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class TPCApp extends Application {
@@ -57,17 +62,10 @@ public class TPCApp extends Application {
         stage.getIcons().add(new Image("file:icon.png"));
         Scene scene = new Scene(gridPane,640,480);
         stage.setScene(scene);
-        try {
-            System.out.println("Starting Connection...");
-            host = InetAddress.getLocalHost();
-            startConnection();
-        } catch (Exception e) {
-            System.out.println("NO");
-        }
-        System.out.println("Connected");
         stage.show();
+        host = InetAddress.getLocalHost();
+        startConnection();
     }
-
 
     private HBox buttonsMain() {
         HBox hBox = new HBox();
@@ -83,13 +81,7 @@ public class TPCApp extends Application {
         hBox.getChildren().add(add);
         hBox.getChildren().add(rem);
         hBox.getChildren().add(dis);
-        add.setOnAction(actionEvent -> {
-            try {
-                addClass();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        add.setOnAction(actionEvent -> addClass());
         rem.setOnAction(actionEvent -> {
                 try {
                     Remove();
@@ -97,7 +89,7 @@ public class TPCApp extends Application {
                     throw new RuntimeException(e);
                      }
         });
-
+        dis.setOnAction(actionEvent -> display());
         hBox.setSpacing(40);
         return hBox;
     }
@@ -110,14 +102,15 @@ public class TPCApp extends Application {
     private TextField moduleCode = new TextField();
     private ChoiceBox<String> classType = new ChoiceBox<>();
 
-    private void addClass() throws IOException {
-    dataBase();
-    VBox vBox = new VBox();
+    private void addClass(){
+        VBox vBox = new VBox();
         classType.setValue("Class Type");
-        classType.getItems().addAll("Lecture","Lab","Tutorial");
+        if(classType.getItems().isEmpty()) {
+            classType.getItems().addAll("Lecture", "Lab", "Tutorial");
+        }
         vBox.setSpacing(25);
-    Stage stage = new Stage();
-    GridPane grid = new GridPane();
+        Stage stage = new Stage();
+        GridPane grid = new GridPane();
         moduleName.setPromptText("Enter Module Name: ");
         moduleCode.setPromptText("Enter Module Code: ");
         date.setPromptText("Select Date:");
@@ -135,22 +128,24 @@ public class TPCApp extends Application {
         if(classTimes.getItems().isEmpty()) for(int i = 9 ; i<18; i++){classTimes.getItems().add(i+":00");}
         vBox.setPrefWidth(640);
         vBox.getChildren().add(menuBar());
-    HBox hBox = new HBox();
+        HBox hBox = new HBox();
         grid.setAlignment(Pos.TOP_CENTER);
         hBox.setAlignment(Pos.CENTER);
         vBox.setAlignment(Pos.CENTER);
         hBox.setSpacing(25);
-    Button show = new Button("Save");
-    Button Stop = new Button("Close");
+        Button show = new Button("Save");
+        Button Stop = new Button("Close");
         show.setPadding(new Insets(10));
         Stop.setPadding(new Insets(10));
         hBox.getChildren().addAll(show,Stop);
         vBox.getChildren().addAll(classType,classTimes, date,moduleName,moduleCode, roomNum,className,hBox);
         show.setOnAction(actionEvent -> {
         Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setHeaderText("Check your input");
+
         if (className.getText().isEmpty()) {
             alert.setContentText("Please enter a class name!");
-            alert.show();
+            alert.showAndWait();
         } else if (roomNum.getText().isEmpty()) {
             alert.setContentText("Please enter a room number!");
             alert.show();
@@ -168,19 +163,51 @@ public class TPCApp extends Application {
             alert.show();
         } else if (classType.getValue().equals("Class Type")) {
             alert.setContentText("Please select a class type!");
+
             alert.show();
-        }
-        String check ;
-        String inputStore = className.getText() + "_" + classType.getValue() + "_" + moduleName.getText() + "_" + moduleCode.getText() + "_" + classTimes.getValue() + "_" + date.getValue() + "_" + roomNum.getText();
-        out.println("ADD," + inputStore);
-        try {
-            check = in.readLine();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        if(check.equals("TAKEN TIME")){
-            alert.setContentText("The time selected is already taken on this date " + date.getValue().toString());
-            alert.show();
+        }else {
+            String check = "";
+            String formatDate = date.getValue().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)) ;
+            String inputStore = className.getText() + "_" + classType.getValue() + "_" + moduleName.getText() + "_" + moduleCode.getText() + "_" + classTimes.getValue() + "_" + formatDate + "_" + roomNum.getText();
+            out.println("ADD_" + inputStore);
+            label:
+            while(!check.equals("GOOD")|| !check.equals("TAKEN TIME")) {
+                try {
+                check = in.readLine();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+                switch (check) {
+                    case "TAKEN TIME":
+                        alert.setContentText("The time selected is already taken on this date " + formatDate);
+                        alert.show();
+                        break label;
+                    case "GOOD":
+                        alert.setAlertType(Alert.AlertType.INFORMATION);
+                        alert.setContentText("Class slot added to " + className.getText() + "\nType: " + classType.getValue() + "\nModule Name: " + moduleName.getText()
+                                + "\nModule Code: " + moduleCode.getText() + "\nTime: " + classTimes.getValue() + "\nDate: " + formatDate);
+                        alert.show();
+                        break label;
+                    case "FIVE":
+                        alert.setContentText("This course already has five modules");
+                        alert.setAlertType(Alert.AlertType.WARNING);
+                        alert.show();
+                        break label;
+                    case "GOOD SQL" :
+                        break label;
+                    case "NO SQL" :
+                        alert.setHeaderText("Check your SQL connection");
+                        alert.setAlertType(Alert.AlertType.ERROR);
+                        alert.setContentText("SQL connection not established");
+                        alert.showAndWait();
+                        while (true) {
+                            if (!alert.isShowing()) {
+                                System.exit(1);
+                                break;
+                            }
+                        }
+                }
+            }
         }
     });
         Stop.setOnAction(actionEvent -> {
@@ -190,12 +217,90 @@ public class TPCApp extends Application {
         grid.add(vBox,0,0);
         stage.setTitle("Add Class To Schedule");
         stage.getIcons().add(new Image("file:/icon.png"));
-    Scene scene = new Scene(grid,640,480);
+        Scene scene = new Scene(grid,640,480);
         stage.getIcons().add(new Image("file:icon.png"));
         stage.setScene(scene);
         stage.show();
 }
 
+public void display(){
+        GridPane grid = new GridPane();
+        grid.setAlignment(Pos.TOP_CENTER);
+        Stage stage = new Stage();
+        HBox hbox = new HBox();
+        VBox vbox = new VBox();
+        vbox.setSpacing(25);
+        vbox.setPrefWidth(640);
+        vbox.getChildren().add(menuBar());
+        Button dis = new Button("Display");
+        Button close = new Button("Close");
+        className.setPromptText("Enter A Name And Year : eg. LM051-2022");
+        className.setMaxWidth(245);
+        moduleCode.setPromptText("Enter A Module Code: ");
+        moduleCode.setMaxWidth(245);
+        classTimes.setMaxWidth(245);
+        classType.setMaxWidth(245);
+        className.setMinWidth(240);
+        classTimes.setValue("Class Times");
+        if(classTimes.getItems().isEmpty()) for(int i = 9 ; i<18; i++){classTimes.getItems().add(i+":00");}
+        classType.setValue("Class Type");
+        classType.getItems().addAll("Lab","Lecture","Tutorial");
+        dis.setPadding(new Insets(10));
+        close.setPadding(new Insets(10));
+        hbox.getChildren().addAll(dis,close);
+        hbox.setAlignment(Pos.CENTER);
+        vbox.setAlignment(Pos.CENTER);
+        hbox.setSpacing(25);;
+        vbox.getChildren().addAll(className,hbox);
+        dis.setOnAction(actionEvent -> {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setHeaderText("Check your input");
+            if(className.getText().isEmpty()){
+                alert.setContentText("Please enter a class name and year! eg. LM051-2022");
+                alert.show();
+            }else {
+                out.println("DISPLAY_" + className.getText());
+                String check = "";
+                label:
+                while (!check.equals("GOOD") || !check.equals("INVALID CLASS NAME")) {
+                    try {
+                        check = in.readLine();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    switch (check) {
+                        case "INVALID CLASS NAME":
+                            alert.setContentText("No class exists with the name and year: " + className.getText());
+                            alert.show();
+                            break label;
+                        case "GOOD":
+                            alert.setHeaderText("Completed");
+                            alert.setAlertType(Alert.AlertType.INFORMATION);
+                            alert.setContentText("Class time table displayed");
+                            alert.show();
+                            break label;
+                        case "GOOD SQL":
+                            check = "";
+                        case "NO SQL":
+                            alert.setAlertType(Alert.AlertType.ERROR);
+                            alert.setHeaderText("Check your SQL connection");
+                            alert.setContentText("SQL connection not established");
+                            alert.showAndWait();
+                            while (true) {
+                                if (!alert.isShowing()) {
+                                    System.exit(1);
+                                    break;
+                                }
+                            }
+                    }
+                }
+            }
+        });
+        grid.add(vbox,0,0);
+        Scene sc = new Scene(grid,640,480);
+        stage.setScene(sc);
+        stage.show();
+}
 
     private void removeDB(){
         try {
@@ -207,40 +312,6 @@ public class TPCApp extends Application {
             Statement removeStatement = dbconnect.createStatement();
            // removeStatement.execute("DELETE FROM CLASSES WHERE modulecode = '"+data[4]+"' AND classyear = '"+data[1]+"' AND date = '"+data[6]"' AND time = '"+data[5]+"';");
         }catch (SQLException e){
-            e.printStackTrace();
-        }
-    }
-
-    private void insertDB() {
-        try {
-            Connection dbconnect = DriverManager.getConnection(
-                    "jdbc:mysql://127.0.0.1:3306/data",
-                    "root",
-                    "@Root_4076-"
-           );
-            Statement dbstatement = dbconnect.createStatement();
-            String inputToDb = dbNewAdd.toString().replace("{", "").replace("}", "").replace("=", "_");
-            String[] data = inputToDb.split(", ");
-            String dataString;
-            int i = 0;
-            while (i < data.length) {
-                String[] c = data[i].split("_");
-                dataString = data[i].replaceAll("/", "-");
-                String[] Sclass;
-                if (dataString.contains(";")) {
-                    int j = 0;
-                    Sclass = dataString.split(";");
-                    while (j < Sclass.length - 1) {
-                        String[] sclass = Arrays.toString(Sclass).replace("[", "").replace("]", "").split(",");
-                        dbstatement.executeUpdate("INSERT INTO CLASSES VALUES (" + "'" + sclass[0] + "'," + "'" + sclass[1] + "'," + "'" + sclass[2] + "'," + "'" + sclass[3] + "'," + "'" + sclass[4] + "'," + "'" + sclass[5] + "'" + ")");
-                        j++;
-                    }
-                } else
-                    dbstatement.executeUpdate("INSERT INTO CLASSES " + "VALUES (" + "'" + c[0] + "'," + "'" + c[1] + "'," + "'" + c[2] + "'," + "'" + c[3] + "'," + "'" + c[4] + "'," + "'" + c[5] + "'" + ")");
-                i++;
-            }
-
-        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -324,6 +395,7 @@ public class TPCApp extends Application {
     }
 
     private void clear(){
+        classType.setValue("Class Type");
         roomNum.clear();
         className.clear();
         date.setValue(null);
@@ -361,29 +433,20 @@ public class TPCApp extends Application {
         clear.setOnAction(actionevent -> {
             clear();
         });
+        checkCon.setOnAction(actionEvent -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setHeaderText("Connection established");
+            if(clientSocket.isConnected()) {
+                alert.setContentText("Connected to server!");
+            }else {
+                alert.setAlertType(Alert.AlertType.ERROR);
+                alert.setHeaderText("Connection Error");
+                alert.setContentText("Not connected to server!");
+            }
+            alert.show();
+        });
         menu.getMenus().add(options);
         return menu;
-    }
-    private VBox DisplayTab() {
-        VBox vBox = new VBox();
-        HBox hBox = new HBox();
-        vBox.setSpacing(40);
-        hBox.setSpacing(20);
-        hBox.setAlignment(Pos.CENTER);
-        vBox.setAlignment(Pos.CENTER);
-        Button show = new Button("Show");
-        Button Stop = new Button("Stop");
-        hBox.getChildren().add(show);
-        hBox.getChildren().add(Stop);
-        show.setOnAction(actionEvent -> System.out.println("HELLO"));
-        Stop.setOnAction(actionEvent -> Platform.exit());
-        TextField textField = new TextField();
-        textField.setPromptText("Enter Class Name And Year: LM051-2022");
-        textField.setMaxWidth(230);
-        vBox.getChildren().add(menuBar());
-        vBox.getChildren().add(textField);
-        vBox.getChildren().add(hBox);
-        return vBox;
     }
 
     private Socket clientSocket;
@@ -394,24 +457,51 @@ public class TPCApp extends Application {
 
     private static InetAddress host;
 
-    private static String m = "";
+    public void startConnection() {
 
-    public void startConnection() throws IOException {
-
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText("Connection established");
         try {
-            clientSocket = new Socket("10.64.138.202", port);
+            clientSocket = new Socket(host, port);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new PrintWriter(clientSocket.getOutputStream(), true);
-            m = dbStorage.toString();
-            out.println(m);
-            String r = in.readLine();
-        }catch(IOException e)
-        {
-            e.printStackTrace();
+            out.println("Connecting");
+            String x = "";
+            try{
+                x = in.readLine();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            if (x.equals("NO SQL")) {
+                alert.setHeaderText("Check your SQL Connection");
+                alert.setAlertType(Alert.AlertType.ERROR);
+                alert.setContentText("SQL connection not established");
+                alert.showAndWait();
+                while (true) {
+                    if (!alert.isShowing()) {
+                        System.exit(1);
+                        break;
+                    }
+                }
+            }else {
+                x = "";
+                alert.setContentText("You have connected successfully");
+                alert.show();
+
+            }
+        }catch(IOException e) {
+            alert.setAlertType(Alert.AlertType.ERROR);
+            alert.setHeaderText("Check your connection");
+            alert.setContentText("You could not connect try again!");
+            alert.showAndWait();
+            while(true){
+                if(!alert.isShowing()){
+                    System.exit(1);
+                    break;
+                }
+            }
         }
-
     }
-
 
     public void clientStop() throws IOException {
         clientSocket.close();
