@@ -25,8 +25,6 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class TPCApp extends Application {
-    private HashMap<String, String> dbNewAdd = new HashMap<>();
-    private HashMap<String, String> dbStorage = new HashMap<>();
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -163,7 +161,6 @@ public class TPCApp extends Application {
             alert.show();
         } else if (classType.getValue().equals("Class Type")) {
             alert.setContentText("Please select a class type!");
-
             alert.show();
         }else {
             String check = "";
@@ -262,7 +259,7 @@ public void display(){
                 out.println("DISPLAY_" + className.getText());
                 String check = "";
                 label:
-                while (!check.equals("GOOD") || !check.equals("INVALID CLASS NAME")) {
+                while (true) {
                     try {
                         check = in.readLine();
                     } catch (IOException e) {
@@ -302,27 +299,15 @@ public void display(){
         stage.show();
 }
 
-    private void removeDB(){
-        try {
-            Connection dbconnect = DriverManager.getConnection(
-                    "jdbc:mysql://127.0.0.1:3306/data",
-                    "root",
-                    "@Root_4076-"
-            );
-            Statement removeStatement = dbconnect.createStatement();
-           // removeStatement.execute("DELETE FROM CLASSES WHERE modulecode = '"+data[4]+"' AND classyear = '"+data[1]+"' AND date = '"+data[6]"' AND time = '"+data[5]+"';");
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
-    }
+
 
     private void Remove() throws IOException {
-        dataBase();
+        //dataBase();
         VBox vBox = new VBox();
         vBox.setSpacing(25);
         Stage stage = new Stage();
         GridPane grid = new GridPane();
-        className.setPromptText("Enter the class name: ");
+        className.setPromptText("Enter A Class Name And Year: LM051-2022");
         className.setMaxWidth(245);
         date.setPromptText("Select Date:");
         date.setMaxWidth(245);
@@ -357,21 +342,33 @@ public void display(){
             }if (classTimes.getValue().equals("Class Time")) {
                 alert.setContentText("Please select a class time!");
                 alert.show();
-            }
-            if (dbStorage.toString().contains(className.getText())) {
-                if (dbStorage.get(className.getText()).contains(date.getValue().toString()) && dbStorage.toString().contains(classTimes.getValue())) {
-                    dbStorage.remove(className.getText());
-                    dbNewAdd.remove(className.getText());
-                    dbStorage.remove(className);
-                    System.out.println("Entry removed for the class " + className.getText() + " on the" + date.getValue().toString() + " at " + classTimes.getValue());
-                }else{//either the date or time aren't present under that specified classname
-                    alert.setContentText("The time or date you have specified for the class you have entered is invalid,no class has been removed" );
-                    alert.show();
+            }else {
 
+                String check = "";
+                String formatDate = date.getValue().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)) ;
+                String inputStore = className.getText() + "_" + classTimes.getValue() + "_" + formatDate;
+                out.println("REMOVE_" + inputStore);
+                while (true) {
+                    try {
+                        check = in.readLine();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if (check.equals("INVALID TIME")) {
+                        alert.setContentText("The time selected is empty on this date " + date.getValue().toString());
+                        alert.showAndWait();
+                        break;
+                    } else if (check.equals("INVALID CLASS NAME")) {
+                        alert.setContentText("The time selected is empty on this date " + date.getValue().toString());
+                        alert.showAndWait();
+                        break;
+                    }else if(check.equals("GOOD")){
+                        alert.setAlertType(Alert.AlertType.INFORMATION);
+                        alert.setContentText("Class Name: "+className.getText()+"\nDate: "+date.getValue()+"\nTime: "+classTimes.getValue());
+                        alert.showAndWait();
+                        break;
+                    }
                 }
-            }else{
-                alert.setContentText("This classname you have specified is invalid");
-                alert.show();
             }
         });
             stop.setOnAction(actionEvent -> {
@@ -403,26 +400,7 @@ public void display(){
         moduleName.clear();
         moduleCode.clear();
     }
-    private void dataBase(){
-        try {
-            Connection dbconnection = DriverManager.getConnection(
-                    "jdbc:mysql://127.0.0.1:3306/data",
-                    "root",
-                    "@Root_4076-"
-            );
-            Statement dbstatement = dbconnection.createStatement();
-            ResultSet dbResultSet = dbstatement.executeQuery("SELECT * FROM CLASSES");
-            while(dbResultSet.next()){
-                String dbReader = dbResultSet.getString("modulename")+"_"+dbResultSet.getString("modulecode")+"_"+dbResultSet.getString("time")+"_"+dbResultSet.getString("date")+"_"+dbResultSet.getString("roomnumber");
-                if(dbStorage.containsKey(dbResultSet.getString("classyear"))){
-                    String tmp = dbStorage.get(dbResultSet.getString("classyear"));
-                    dbStorage.put(dbResultSet.getString("classyear"),tmp+";"+dbReader);
-                }else dbStorage.put(dbResultSet.getString("classyear"),dbReader);
-            }
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
-    }
+
     private MenuBar menuBar(){
         MenuBar menu = new MenuBar();
         Menu options = new Menu("Options");

@@ -42,7 +42,7 @@ public class TCPServer {
                     add();
                 }
                 case "REMOVE" -> {
-
+                    remove();
                 }
                 case "DISPLAY" -> {
                     display();
@@ -59,6 +59,12 @@ public class TCPServer {
 
     }
 
+
+
+    public static void ServerStop() throws IOException {
+        clientSocket.close();
+        serverSocket.close();
+    }
     private void dataBase() {
         try {
             Connection dbconnection = DriverManager.getConnection(
@@ -79,11 +85,6 @@ public class TCPServer {
             out.println("NO SQL");
         }
         out.println("GOOD SQL");
-    }
-
-    public static void ServerStop() throws IOException {
-        clientSocket.close();
-        serverSocket.close();
     }
 
     public static void main(String[] args) throws IOException {
@@ -118,6 +119,19 @@ public class TCPServer {
     public static class IncorrectActionException extends Exception {
         public IncorrectActionException(String text) {
             super(text);
+        }
+    }
+    private void removeDB(){
+        try {
+            Connection dbconnect = DriverManager.getConnection(
+                    "jdbc:mysql://127.0.0.1:3306/data",
+                    "root",
+                    "@Root_4076-"
+            );
+            Statement removeStatement = dbconnect.createStatement();
+             removeStatement.execute("DELETE FROM CLASSES WHERE classyear = '" + data[1]+"' AND date = '"+data[3]+"' AND time = '"+data[2]+"';");
+        }catch (SQLException e){
+            e.printStackTrace();
         }
     }
 
@@ -156,6 +170,26 @@ public class TCPServer {
             insertDB();
         }
         dbNewAdd.clear();
+    }
+    public void remove() throws IOException {
+        String removeClass = data[2] + data[3]; //puts classname date and year into a string
+        if (dbStorage.toString().contains(data[1])) {
+            try {           //valid date and class but invalid time
+                if (!dbStorage.get(data[1]).contains(data[3]) || !dbStorage.get(data[1]).contains(data[2])) {
+                    out.println("INVALID TIME");
+                    throw new IncorrectActionException("The time-slot for the given date is empty");
+                }else {
+                    out.println("GOOD");
+                    dbStorage.remove(data[1],removeClass);
+                    removeDB();
+
+                }
+            }  catch (IncorrectActionException e) {
+                System.out.println(e.getMessage());
+            }
+        }else{
+            out.println("INVALID CLASS NAME");
+        }
     }
 
     private void display(){
