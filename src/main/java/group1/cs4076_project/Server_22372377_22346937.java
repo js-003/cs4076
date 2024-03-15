@@ -90,7 +90,7 @@ public class Server_22372377_22346937 {
     public static void main(String[] args) throws IOException {
         System.out.println("Opening port...\n");
         try {
-            serverSocket = new ServerSocket(PORT);      //Step 1.
+            serverSocket = new ServerSocket(PORT);
         } catch (IOException e) {
             System.out.println("Unable to attach to port!");
         } finally {
@@ -181,9 +181,8 @@ public class Server_22372377_22346937 {
         dbNewAdd.clear();
     }
     private void remove() throws IOException {
-        String removeClass = data[2]+"_"+ data[3]; //puts classname date and year into a string
         if (dbStorage.toString().contains(data[1])) {
-            try {           //valid date and class but invalid time
+            try {
                 if (!dbStorage.get(data[1]).contains(data[3]) || !dbStorage.get(data[1]).contains(data[2])) {
                     out.println("INVALID TIME");
                     throw new IncorrectActionException("The time-slot for the given date is empty");
@@ -202,6 +201,7 @@ public class Server_22372377_22346937 {
     }
 
     private void display(){
+        out.println("");
         String output = "";
         if (dbStorage.containsKey(data[1])){
             System.out.println("\nClasses for " +data[1]);

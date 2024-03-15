@@ -222,8 +222,6 @@ public class Client_22372377_22346937 extends Application {
                             alert.setAlertType(Alert.AlertType.WARNING);
                             alert.showAndWait();
                             break label;
-                        case "GOOD SQL":
-                            break label;
                         case "NO SQL":
                             alert.setTitle("SQL Error");
                             alert.setHeaderText("Check your SQL connection");
@@ -315,9 +313,6 @@ public class Client_22372377_22346937 extends Application {
                             alert.setAlertType(Alert.AlertType.INFORMATION);
                             alert.setContentText("Class time table displayed");
                             alert.show();
-                            break label;
-                        case "GOOD SQL":
-                            check = "";
                             break label;
                         case "NO SQL":
                             alert.setTitle("SQL Error");
