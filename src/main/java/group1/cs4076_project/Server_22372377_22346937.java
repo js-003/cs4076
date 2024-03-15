@@ -8,15 +8,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
-public class TCPServer {
+public class Server_22372377_22346937 {
 
     private HashMap<String, String> dbNewAdd = new HashMap<>();
     private HashMap<String,String> dbStorage = new HashMap<>();
-
-    static String[] data ;
+    private static String[] data ;
     private static Socket clientSocket;
     private static PrintWriter out;
     private static BufferedReader in;
@@ -24,7 +22,7 @@ public class TCPServer {
     private static final int PORT = 1234;
     private static int clientConnections = 0;
 
-    public void connect(int port) throws IOException {
+    private void connect(int port) throws IOException {
         try {
             clientSocket = serverSocket.accept();
             clientConnections++;
@@ -38,30 +36,30 @@ public class TCPServer {
                 System.out.println("Message received from client: " + clientConnections + "\n" + message.replaceAll("_"," "));
                 data = message.split("_");
                 switch (data[0]) {
-                case "ADD" -> {
-                    add();
-                }
-                case "REMOVE" -> {
-                    remove();
-                }
-                case "DISPLAY" -> {
-                    display();
-                }
-                case "STOP" -> {
-                    checker = false;
-                    ServerStop();
-                }
+                    case "ADD" -> {
+                        add();
+                    }
+                    case "REMOVE" -> {
+                        remove();
+                    }
+                    case "DISPLAY" -> {
+                        display();
+                    }
+                    case "STOP" -> {
+                        checker = false;
+                        ServerStop();
+                    }
+                    case "CHECKING CONNECTION" -> {
+                        out.println(serverSocket.isClosed());
+                    }
                 }
             }
         } catch (IOException e) {
             System.out.println("Client could not connect!");
         }
-
     }
 
-
-
-    public static void ServerStop() throws IOException {
+    private static void ServerStop() throws IOException {
         clientSocket.close();
         serverSocket.close();
     }
@@ -82,8 +80,10 @@ public class TCPServer {
                 } else dbStorage.put(dbResultSet.getString("classyear"), dbReader);
             }
         } catch (SQLException e) {
+            System.out.println("NO SQL CONNECTION");
             out.println("NO SQL");
         }
+        System.out.println("SQL CONNECTED");
         out.println("GOOD SQL");
     }
 
@@ -94,11 +94,10 @@ public class TCPServer {
         } catch (IOException e) {
             System.out.println("Unable to attach to port!");
         } finally {
-            TCPServer t = new TCPServer();
+            Server_22372377_22346937 t = new Server_22372377_22346937();
             t.connect(PORT);
+            System.out.printf("Client %d connected!",clientConnections);
         }
-
-
     }
 
     private void insertDB() {
@@ -111,8 +110,10 @@ public class TCPServer {
             Statement dbstatement = dbconnect.createStatement();
             dbstatement.executeUpdate("INSERT INTO CLASSES " + "VALUES (" + "'" + data[1] + "'," + "'" + data[2] + "'," + "'" + data[3] + "'," + "'" + data[4] + "'," + "'" + data[5] + "'," + "'" + data[6] + "'," + "'" + data[7] + "'" + ")");
         } catch (SQLException e) {
+            System.out.println("SQL PROBLEM");
             out.println("NO SQL");
         }
+        System.out.printf("INSERTED Class Name: %s, Class Type: %s, Module Name: %s, Module Code: %s, Time:  %s, Date: %s, Room Number: %s\n", data[1],data[2],data[3],data[4],data[5],data[6],data[7] );
         out.println("GOOD SQL");
     }
 
@@ -131,11 +132,14 @@ public class TCPServer {
             Statement removeStatement = dbconnect.createStatement();
              removeStatement.execute("DELETE FROM CLASSES WHERE classyear = '" + data[1]+"' AND date = '"+data[3]+"' AND time = '"+data[2]+"';");
         }catch (SQLException e){
-            e.printStackTrace();
+            System.out.println("SQL PROBLEM");
+            out.println("NO SQL");
         }
+        System.out.printf("REMOVED Class Name: %s, Time:  %s, Date: %s\n", data[1],data[3],data[2]);
+        out.println("GOOD SQL");
     }
 
-    public void add() throws IOException {
+    private void add() throws IOException {
         String inputStore = data[2] +"_"+ data[3] +"_" + data[4] +"_"+ data[5] +"_"+ data[6] +"_"+ data[7];
         if (dbStorage.containsKey(data[1])) {
             try {
@@ -155,7 +159,12 @@ public class TCPServer {
                         dbStorage.put(data[1], dbStorage.get(data[1]) + ";" + inputStore);
                         dbNewAdd.put(data[1], inputStore);
                         insertDB();
-                    }else{
+                    }else if(s.contains(data[4])){
+                        out.println("GOOD");
+                        dbStorage.put(data[1], dbStorage.get(data[1]) + ";" + inputStore);
+                        dbNewAdd.put(data[1], inputStore);
+                        insertDB();
+                    } else{
                         out.println("FIVE");
                         throw new IncorrectActionException("This course already has five modules");
                     }
@@ -171,8 +180,8 @@ public class TCPServer {
         }
         dbNewAdd.clear();
     }
-    public void remove() throws IOException {
-        String removeClass = data[2] + data[3]; //puts classname date and year into a string
+    private void remove() throws IOException {
+        String removeClass = data[2]+"_"+ data[3]; //puts classname date and year into a string
         if (dbStorage.toString().contains(data[1])) {
             try {           //valid date and class but invalid time
                 if (!dbStorage.get(data[1]).contains(data[3]) || !dbStorage.get(data[1]).contains(data[2])) {
@@ -180,10 +189,10 @@ public class TCPServer {
                     throw new IncorrectActionException("The time-slot for the given date is empty");
                 }else {
                     out.println("GOOD");
-                    dbStorage.remove(data[1],removeClass);
+                    dbStorage.clear();
                     removeDB();
-
                 }
+                dataBase();
             }  catch (IncorrectActionException e) {
                 System.out.println(e.getMessage());
             }
@@ -194,20 +203,16 @@ public class TCPServer {
 
     private void display(){
         String output = "";
-        //System.out.println(dbStorage.get(data[1]));
         if (dbStorage.containsKey(data[1])){
             System.out.println("\nClasses for " +data[1]);
             out.println("GOOD");
             output =  dbStorage.get(data[1]);
             output = output.replaceAll(";", "\n").replaceAll("=", "\n").replaceAll(", ", "\n").replaceAll("_"," ");
-            //output = output.replace("{", "").replace("}", "");
             System.out.println(output);
         }else {
             out.println("INVALID CLASS NAME");
             System.out.println("There is no such class name and year in the database!");
         }
-
-//
     }
 }
 
